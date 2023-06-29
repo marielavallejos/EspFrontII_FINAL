@@ -6,14 +6,13 @@ import {API_URL} from "../../app/constants"
 import userEvent from "@testing-library/user-event";
 import Cita from "./Cita";
 
-const data = {
-  results: [
+const data = 
+  [
     {quote:"Oh, so they have Internet on computers now!",
-     character:"Homer Simpson",
+     character:"Homer",
      image:"https://cdn.glitch.com/3c3ffadc-3406-4440-bb95-d40ec8fcde72%2FHomerSimpson.png?1497567511939",
      characterDirection:"Right"}
-  ],
-};
+  ];
 
 export const handlers = [
   rest.get(API_URL, (req, res, ctx) => {
@@ -32,6 +31,7 @@ beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());
 
 afterAll(() => server.close());
+
 
 describe("App", () => {
 
@@ -53,18 +53,25 @@ describe("App", () => {
             const user = userEvent.setup();
             const input = screen.getByRole("textbox", { name: "Author Cita" });
             const button = screen.getByRole("button", { name: "Obtener cita aleatoria"});
-            await user.type(input, "Moe");
+            await user.clear(input);
+            await user.type(input, "Homer");
             await user.click(button);
-          expect(screen.getByText(/CARGANDO.../i)).toBeInTheDocument();
+            expect(screen.getByText(/CARGANDO.../i)).toBeInTheDocument();
         });
         it("Deberia mostrar la cita del personaje", async () => {
           render(<Cita/>);
+          server.use(
+            rest.get(`${API_URL}?character=Homer`, (req, res, ctx) => {
+                return res(ctx.json(data), ctx.status(200));
+            })
+          );
           const user = userEvent.setup();
               const input = screen.getByRole("textbox", { name: "Author Cita" });
               const button = screen.getByRole("button", { name: "Obtener cita aleatoria"});
-              await user.type(input, "Lisa");
+              await user.clear(input);
+              await user.type(input, "Homer");
               await user.click(button);
-              const element = await screen.findByText(/Lisa/i);
+              const element = await screen.findByText(/Homer/i);
               expect(element).toBeInTheDocument();
           });
       });
@@ -72,19 +79,24 @@ describe("App", () => {
       describe("Cuando se ingresa un nombre inválido o números", () => {
         it("Deberia mostrar mensaje: Por favor ingrese un nombre válido", async () => {
           render(<Cita/>);
+          server.use(
+            rest.get(`${API_URL}?character=morty`, (req, res, ctx) => {
+                return res(ctx.json([]), ctx.status(200));
+            })
+          );
               const user = userEvent.setup();
               const input = screen.getByRole("textbox", { name: "Author Cita" });
               const button = screen.getByRole("button", { name: "Obtener cita aleatoria"});
-              await user.type(input, "1234");
+              await user.clear(input);
+              await user.type(input, "morty");
               await user.click(button);
-              await waitFor(()=> {
-                expect(
-                screen.getByText(/No se encontro ninguna cita/i)).toBeInTheDocumnt();
-              });
+              await waitFor(()=>{
+                expect(screen.getByText(/Por favor ingrese un nombre válido/i)).toBeInTheDocument();
+              })
           });
         });
     });
 
     
-
+    
 
