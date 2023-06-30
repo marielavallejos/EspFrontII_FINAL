@@ -1,6 +1,6 @@
 import { rest } from "msw";
 import { setupServer } from "msw/node";
-import { screen, waitFor } from "@testing-library/react";
+import { fireEvent, screen, waitFor } from "@testing-library/react";
 import {render} from "../../test-utils"
 import {API_URL} from "../../app/constants"
 import userEvent from "@testing-library/user-event";
@@ -94,7 +94,16 @@ describe("App", () => {
                 expect(screen.getByText(/Por favor ingrese un nombre válido/i)).toBeInTheDocument();
               })
           });
+          test("debería llamar a limpiar y restablecer el valor de entrada al hacer clic en el botón Borrar", () => {
+            render(<Cita/>);
+            const input = screen.getByPlaceholderText("Ingresa el nombre del autor");
+            fireEvent.change(input, { target: { value: "Autor de la cita" } });
+            const botonBorrar = screen.getByLabelText("Borrar");
+            fireEvent.click(botonBorrar);
+            expect((input as HTMLInputElement).value).toBe("");
+          });
         });
+      
     });
 
     
